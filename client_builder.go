@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/1password/onepassword-sdk-go/internal"
+	"github.com/dschaller/onepassword-sdk-go/internal"
 )
 
 const (

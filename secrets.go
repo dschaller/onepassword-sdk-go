@@ -6,7 +6,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/1password/onepassword-sdk-go/internal"
+	"github.com/dschaller/onepassword-sdk-go/internal"
 )
 
 // The Secrets API includes all operations the SDK client can perform on secrets.
