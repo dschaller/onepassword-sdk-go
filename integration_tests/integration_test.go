@@ -7,8 +7,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/1password/onepassword-sdk-go"
-	"github.com/1password/onepassword-sdk-go/internal"
+	"github.com/dschaller/onepassword-sdk-go"
+	"github.com/dschaller/onepassword-sdk-go/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
