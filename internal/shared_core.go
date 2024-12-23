@@ -143,6 +143,8 @@ func (c *SharedCore) ReleaseClient(clientID uint64) {
 		if err != nil {
 			i.plugin.Log(extism.LogLevelWarn, "memory couldn't be released")
 		}
+		c.lock.Lock()
+		defer c.lock.Unlock()
 		delete(c.instByClientID, clientID)
 	}
 }
