@@ -110,7 +110,9 @@ func (c *SharedCore) Invoke(ctx context.Context, invokeConfig InvokeConfig) (*st
 	var i *pluginInstance
 	clientID := invokeConfig.Invocation.ClientID
 	if clientID != nil {
+		c.lock.Lock()
 		i = c.instByClientID[clientID]
+		c.lock.Unlock()
 	}
 	if i != nil {
 		i.lock.Lock()
@@ -134,7 +136,10 @@ func (c *SharedCore) Invoke(ctx context.Context, invokeConfig InvokeConfig) (*st
 
 // ReleaseClient releases memory in the core associated with the given client ID.
 func (c *SharedCore) ReleaseClient(clientID *uint64) {
-	if i, ok := c.instByClientID[clientID]; ok {
+	c.lock.Lock()
+	i, ok := c.instByClientID[clientID]
+	c.lock.Unlock()
+	if ok {
 		i.lock.Lock()
 		marshaledClientID, err := json.Marshal(*clientID)
 		if err != nil {
