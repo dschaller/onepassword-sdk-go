@@ -40,14 +40,14 @@ func createClient(ctx context.Context, core internal.Core, opts ...ClientOption)
 	}
 
 	inner := internal.InnerClient{
-		ID:   *clientID,
+		ID:   clientID,
 		Core: core,
 	}
 
 	initAPIs(&client, inner)
 
 	runtime.SetFinalizer(&client, func(f *Client) {
-		core.ReleaseClient(*clientID)
+		core.ReleaseClient(clientID)
 	})
 	return &client, nil
 }
@@ -74,7 +74,7 @@ func WithIntegrationInfo(name string, version string) ClientOption {
 func clientInvoke(ctx context.Context, innerClient internal.InnerClient, invocation string, params map[string]interface{}) (*string, error) {
 	invocationResponse, err := innerClient.Core.Invoke(ctx, internal.InvokeConfig{
 		Invocation: internal.Invocation{
-			ClientID: &innerClient.ID,
+			ClientID: innerClient.ID,
 			Parameters: internal.Parameters{
 				MethodName:       invocation,
 				SerializedParams: params,

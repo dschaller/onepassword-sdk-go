@@ -17,7 +17,7 @@ var SDKSemverVersion string
 type Core interface {
 	InitClient(ctx context.Context, config ClientConfig) (*uint64, error)
 	Invoke(ctx context.Context, invokeConfig InvokeConfig) (*string, error)
-	ReleaseClient(clientID uint64)
+	ReleaseClient(clientID *uint64)
 }
 
 // ClientConfig contains information required for creating a client.
@@ -66,6 +66,6 @@ type Parameters struct {
 
 // InnerClient represents the sdk-core client on which calls will be made.
 type InnerClient struct {
-	ID   uint64
+	ID   *uint64
 	Core Core
 }

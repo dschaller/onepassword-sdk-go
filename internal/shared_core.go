@@ -31,7 +31,7 @@ func GetSharedCore() (*SharedCore, error) {
 		}
 		core = &SharedCore{
 			plugin:         p,
-			instByClientID: map[uint64]*pluginInstance{},
+			instByClientID: map[*uint64]*pluginInstance{},
 		}
 	}
 
@@ -61,7 +61,7 @@ type SharedCore struct {
 	plugin *extism.CompiledPlugin
 
 	// client instances are the Extism plugin instances spawned from the compiled plugin per client
-	instByClientID map[uint64]*pluginInstance
+	instByClientID map[*uint64]*pluginInstance
 }
 
 func (c *SharedCore) spawnInstance(ctx context.Context) (*extism.Plugin, error) {
@@ -96,7 +96,7 @@ func (c *SharedCore) InitClient(ctx context.Context, config ClientConfig) (*uint
 
 	c.lock.Lock()
 	defer c.lock.Unlock()
-	c.instByClientID[id] = &pluginInstance{plugin: inst}
+	c.instByClientID[&id] = &pluginInstance{plugin: inst}
 	return &id, nil
 }
 
@@ -110,7 +110,7 @@ func (c *SharedCore) Invoke(ctx context.Context, invokeConfig InvokeConfig) (*st
 	var i *pluginInstance
 	clientID := invokeConfig.Invocation.ClientID
 	if clientID != nil {
-		i = c.instByClientID[*clientID]
+		i = c.instByClientID[clientID]
 	}
 	if i != nil {
 		i.lock.Lock()
@@ -133,9 +133,9 @@ func (c *SharedCore) Invoke(ctx context.Context, invokeConfig InvokeConfig) (*st
 }
 
 // ReleaseClient releases memory in the core associated with the given client ID.
-func (c *SharedCore) ReleaseClient(clientID uint64) {
+func (c *SharedCore) ReleaseClient(clientID *uint64) {
 	if i, ok := c.instByClientID[clientID]; ok {
-		marshaledClientID, err := json.Marshal(clientID)
+		marshaledClientID, err := json.Marshal(*clientID)
 		if err != nil {
 			i.plugin.Log(extism.LogLevelWarn, fmt.Sprintf("memory couldn't be released: %s", err.Error()))
 		}
