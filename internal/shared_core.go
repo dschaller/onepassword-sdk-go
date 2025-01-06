@@ -135,6 +135,7 @@ func (c *SharedCore) Invoke(ctx context.Context, invokeConfig InvokeConfig) (*st
 // ReleaseClient releases memory in the core associated with the given client ID.
 func (c *SharedCore) ReleaseClient(clientID *uint64) {
 	if i, ok := c.instByClientID[clientID]; ok {
+		i.lock.Lock()
 		marshaledClientID, err := json.Marshal(*clientID)
 		if err != nil {
 			i.plugin.Log(extism.LogLevelWarn, fmt.Sprintf("memory couldn't be released: %s", err.Error()))
@@ -143,6 +144,11 @@ func (c *SharedCore) ReleaseClient(clientID *uint64) {
 		if err != nil {
 			i.plugin.Log(extism.LogLevelWarn, "memory couldn't be released")
 		}
+		err = i.plugin.Close(context.Background())
+		if err != nil {
+			i.plugin.Log(extism.LogLevelWarn, "memory couldn't be released")
+		}
+		i.lock.Unlock()
 		c.lock.Lock()
 		defer c.lock.Unlock()
 		delete(c.instByClientID, clientID)
