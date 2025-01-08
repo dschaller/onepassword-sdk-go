@@ -44,6 +44,7 @@ func createClient(ctx context.Context, core internal.Core, opts ...ClientOption)
 		Core: core,
 	}
 
+	client.inner = inner
 	initAPIs(&client, inner)
 
 	runtime.SetFinalizer(&client, func(f *Client) {

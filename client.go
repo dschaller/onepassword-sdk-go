@@ -12,6 +12,18 @@ type Client struct {
 	Secrets SecretsAPI
 	Items   ItemsAPI
 	Vaults  VaultsAPI
+	inner internal.InnerClient
+}
+
+// Release the client.
+//
+// This will call the underlying release client function in the shared wasm module
+// for the client as well as close the plugin instance to free up any memory
+// associated with the client.
+func (c *Client) Release() {
+	if c.inner.ID != nil {
+		c.inner.Core.ReleaseClient(c.inner.ID)
+	}
 }
 
 func initAPIs(client *Client, inner internal.InnerClient) {

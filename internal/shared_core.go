@@ -135,10 +135,12 @@ func (c *SharedCore) Invoke(ctx context.Context, invokeConfig InvokeConfig) (*st
 }
 
 // ReleaseClient releases memory in the core associated with the given client ID.
+//
+// This function is idempotent as it can be called both manually and by GC.
 func (c *SharedCore) ReleaseClient(clientID *uint64) {
 	c.lock.Lock()
+	defer c.lock.Unlock()
 	i, ok := c.instByClientID[clientID]
-	c.lock.Unlock()
 	if ok {
 		i.lock.Lock()
 		marshaledClientID, err := json.Marshal(*clientID)
@@ -154,8 +156,6 @@ func (c *SharedCore) ReleaseClient(clientID *uint64) {
 			i.plugin.Log(extism.LogLevelWarn, "memory couldn't be released")
 		}
 		i.lock.Unlock()
-		c.lock.Lock()
-		defer c.lock.Unlock()
 		delete(c.instByClientID, clientID)
 	}
 }
