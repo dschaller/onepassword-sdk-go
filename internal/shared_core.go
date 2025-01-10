@@ -134,28 +134,50 @@ func (c *SharedCore) Invoke(ctx context.Context, invokeConfig InvokeConfig) (*st
 	return &response, nil
 }
 
+func (i *pluginInstance) release(clientID *uint64) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+	if i.plugin == nil {
+		return
+	}
+
+	encounteredErr := false
+	marshaledClientID, err := json.Marshal(*clientID)
+	if err != nil {
+		encounteredErr = true
+		i.plugin.Log(extism.LogLevelWarn, fmt.Sprintf("memory couldn't be released: %s", err.Error()))
+	}
+
+	_, _, err = i.plugin.Call(releaseClientFuncName, marshaledClientID)
+	if err != nil {
+		encounteredErr = true
+		i.plugin.Log(extism.LogLevelWarn, "memory couldn't be released")
+	}
+
+	err = i.plugin.Close(context.Background())
+	if err != nil {
+		encounteredErr = true
+		i.plugin.Log(extism.LogLevelWarn, "memory couldn't be released")
+	}
+
+	// explicitly unset plugin if memory was succesfully release
+	// such that other instance threads don't attempt to re-release
+	if !encounteredErr {
+		i.plugin = nil
+	}
+}
+
 // ReleaseClient releases memory in the core associated with the given client ID.
 //
 // This function is idempotent as it can be called both manually and by GC.
 func (c *SharedCore) ReleaseClient(clientID *uint64) {
 	c.lock.Lock()
-	defer c.lock.Unlock()
 	i, ok := c.instByClientID[clientID]
+	c.lock.Unlock()
 	if ok {
-		i.lock.Lock()
-		marshaledClientID, err := json.Marshal(*clientID)
-		if err != nil {
-			i.plugin.Log(extism.LogLevelWarn, fmt.Sprintf("memory couldn't be released: %s", err.Error()))
-		}
-		_, _, err = i.plugin.Call(releaseClientFuncName, marshaledClientID)
-		if err != nil {
-			i.plugin.Log(extism.LogLevelWarn, "memory couldn't be released")
-		}
-		err = i.plugin.Close(context.Background())
-		if err != nil {
-			i.plugin.Log(extism.LogLevelWarn, "memory couldn't be released")
-		}
-		i.lock.Unlock()
+		i.release(clientID)
+		c.lock.Lock()
+		defer c.lock.Unlock()
 		delete(c.instByClientID, clientID)
 	}
 }
